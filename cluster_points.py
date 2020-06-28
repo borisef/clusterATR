@@ -16,6 +16,7 @@ WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
 COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
+FCLUSTER_THRESHOLD = 0.5 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
 all_results_in_csv_name = "all_results.csv" # data table with all results
 confmType_csv_name = "confmType.csv" # confusion matrix type classifier
@@ -103,7 +104,7 @@ def similarity(x,y):
 
 
 
-fclust1 = fclusterdata(X = df, t = 0.5 , metric=similarity, criterion='distance', method='complete')
+fclust1 = fclusterdata(X = df, t = FCLUSTER_THRESHOLD , metric=similarity, criterion='distance', method='complete')
 numClust = len(np.unique(fclust1))
 print(numClust)
 

@@ -18,9 +18,9 @@ TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination fo
 
 FCLUSTER_THRESHOLD = 0.5 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
-all_results_in_csv_name = "all_results.csv" # data table with all results
-confmType_csv_name = "confmType.csv" # confusion matrix type classifier
-confmColor_csv_name = "confmColor.csv" # confusion matrix color classifier
+all_results_in_csv_name = "data/all_results.csv" # data table with all results
+confmType_csv_name = "data/confmType.csv" # confusion matrix type classifier
+confmColor_csv_name = "data/confmColor.csv" # confusion matrix color classifier
 
 hotEncodeColors = { 0: 'black', 1: 'blue', 2: 'gray',  3: 'green',4: 'red', 5: 'white'}
 hotEncodeTypes = { 1: 'UNKNOWN_SUB_CLASS', 2: 'PRIVATE', 3: 'COMMERCIAL',  4: 'PICKUP',5: 'TRUCK', 6: 'BUS', 7: 'VAN', 8: 'TRACKTOR'}
@@ -113,9 +113,9 @@ df['label'] = fclust1
 #aa2 = cluster.OPTICS(min_samples=1,metric = similarity, eps = 0.3).fit_predict(df)
 
 #draw results
-cluster_utils.plot_scatter(df,'color','colors.png')
-cluster_utils.plot_scatter(df,'class','types.png')
-cluster_utils.plot_scatter(df,'label','labels.png')
+cluster_utils.plot_scatter(df,'color','results/colors.png')
+cluster_utils.plot_scatter(df,'class','results/types.png')
+cluster_utils.plot_scatter(df,'label','results/labels.png')
 
 print("OK")
 

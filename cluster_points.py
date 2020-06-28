@@ -16,7 +16,7 @@ WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
 COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
-FCLUSTER_THRESHOLD = 0.5 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
+FCLUSTER_THRESHOLD = 0.6 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
 all_results_in_csv_name = "data/all_results.csv" # data table with all results
 confmType_csv_name = "data/confmType.csv" # confusion matrix type classifier
@@ -112,10 +112,17 @@ df['label'] = fclust1
 #aa = cluster.DBSCAN(eps=0.3, min_samples=1, metric= similarity).fit_predict(df)
 #aa2 = cluster.OPTICS(min_samples=1,metric = similarity, eps = 0.3).fit_predict(df)
 
+
+df = cluster_utils.AddText(df)
+
 #draw results
 cluster_utils.plot_scatter(df,'color','results/colors.png')
 cluster_utils.plot_scatter(df,'class','results/types.png')
-cluster_utils.plot_scatter(df,'label','results/labels.png')
+cluster_utils.plot_scatter(df,'label','results/clusters.png', False)
+cluster_utils.plot_scatter(df,'label','results/clusters_with_text.png', True)
+
+
+
 
 print("OK")
 

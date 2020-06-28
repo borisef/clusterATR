@@ -5,7 +5,13 @@ import pandas as pd
 hotEncodeColors = { 0: 'black', 1: 'blue', 2: 'gray',  3: 'green',4: 'red', 5: 'white'}
 hotEncodeTypes = { 1: 'UNKNOWN_SUB_CLASS', 2: 'PRIVATE', 3: 'COMMERCIAL',  4: 'PICKUP',5: 'TRUCK', 6: 'BUS', 7: 'VAN', 8: 'TRACKTOR'}
 
-def plot_scatter(df, grp_by, save2im):
+def AddText(df):
+    df["text"] = "(F:" + df["Frame"].astype("str") + ", C:" + df["color"].astype("str") + ", SubCl" + df[
+        "class"].astype("str") + ",id:"+ df[
+        "ObjID"].astype("str") + ")"
+    return df
+
+def plot_scatter(df, grp_by, save2im, withText = False):
 
     groups = df.groupby(grp_by)
     if(grp_by == "color"):
@@ -31,6 +37,14 @@ def plot_scatter(df, grp_by, save2im):
     for name, group1 in groups1:
         if(name > 0):
             ax.plot(group1.x, group1.y, marker='', linestyle='--', ms=1)
+
+    XX = np.array(df["x"])
+    YY = np.array(df["y"])
+
+    if(withText):
+        TT = np.array(df["text"])
+        for i, txt in enumerate(TT):
+            ax.annotate(txt, (XX[i], YY[i]))
 
     ax.legend()
     plt.savefig(save2im)

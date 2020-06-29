@@ -8,8 +8,13 @@ hotEncodeTypes = { 1: 'UNKNOWN_SUB_CLASS', 2: 'PRIVATE', 3: 'COMMERCIAL',  4: 'P
 def AddText(df):
     df["text"] = "(F:" + df["Frame"].astype("str") + ", C:" + df["color"].astype("str") + ", SubCl" + df[
         "class"].astype("str") + ",id:"+ df[
-        "ObjID"].astype("str") + ")"
+        "ObjID"].astype("str") +  ", L:" + df["label"].astype("str") +")"
     return df
+
+def AddTextDff(dff):
+    dff["text"] = "(#F:" + dff["Frame_count"].astype("str") + ", C:" + dff["color"].astype("str") + ", Cl" + dff[
+        "class"].astype("str") +")"
+    return dff
 
 def plot_scatter(df, grp_by, save2im, withText = False):
 
@@ -32,11 +37,11 @@ def plot_scatter(df, grp_by, save2im, withText = False):
             ax.plot(group.x, group.y, marker='o', linestyle='', ms=5, label=hotEncode[name], color = hotEncode[name], markeredgecolor="black")
         else:
             ax.plot(group.x, group.y, marker='o', linestyle='', ms=5, label=hotEncode[name])
-
-    groups1=df.groupby("ObjID")
-    for name, group1 in groups1:
-        if(name > 0):
-            ax.plot(group1.x, group1.y, marker='', linestyle='--', ms=1)
+    if("objID" in df.columns):
+        groups1=df.groupby("ObjID")
+        for name, group1 in groups1:
+            if(name > 0):
+                ax.plot(group1.x, group1.y, marker='', linestyle='--', ms=1)
 
     XX = np.array(df["x"])
     YY = np.array(df["y"])

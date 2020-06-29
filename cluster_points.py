@@ -4,19 +4,21 @@ import matplotlib.pyplot as plt
 import sklearn
 from sklearn import cluster
 from scipy.cluster.hierarchy import fclusterdata
+from scipy import stats
 import cluster_utils
 
 
 
 LOCATE_SIGMA = 5 # mean error of igun
 WEIGHT_LOC = 0.5 # distance "expert" weight
-WEIGHT_COLOR = 0.125 # color "expert" weight
+WEIGHT_COLOR = 0.2 # color "expert" weight
 WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
+FRAME_COUNT_THRESHOLD = 2  # min frames per target
 
 COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
-FCLUSTER_THRESHOLD = 0.6 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
+FCLUSTER_THRESHOLD = 0.7 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
 all_results_in_csv_name = "data/all_results.csv" # data table with all results
 confmType_csv_name = "data/confmType.csv" # confusion matrix type classifier
@@ -115,16 +117,50 @@ df['label'] = fclust1
 
 df = cluster_utils.AddText(df)
 
+
+#major voting per cluster
+df_final = (df.groupby('label').agg({
+    'x': 'median',
+    'y': 'median',
+    'Frame': ['min', 'max', 'count'],
+    'ObjID': 'count',
+    'class': [lambda x: stats.mode(x)[0], lambda x: list(x)],
+    'color': [lambda x: stats.mode(x)[0], lambda x: list(x)] }) )
+
+df_final.columns = ["_".join(x) for x in df_final.columns.ravel()]
+df_final.rename(columns={'class_<lambda_0>':'class',
+                         'color_<lambda_0>':'color',
+                         'class_<lambda_1>':'all_class',
+                         'color_<lambda_1>':'all_color',
+                         'x_median':"x",
+                         'y_median':'y'
+                         },
+                 inplace=True)
+
+print(df_final)
+df_final = cluster_utils.AddTextDff(df_final)
+
+
+
+
+
+
 #draw results
 cluster_utils.plot_scatter(df,'color','results/colors.png')
 cluster_utils.plot_scatter(df,'class','results/types.png')
 cluster_utils.plot_scatter(df,'label','results/clusters.png', False)
 cluster_utils.plot_scatter(df,'label','results/clusters_with_text.png', True)
 
-
-
+#draw df_final with text etc
+#TODO: do it nicer
+cluster_utils.plot_scatter(df_final,'class','results/final_with_text.png', True)
+#remove outliers
+df_final_no_false = df_final[df_final['Frame_count'] >= FRAME_COUNT_THRESHOLD]
+cluster_utils.plot_scatter(df_final_no_false,'class','results/final_with_text_no_false.png', True)
+print(df_final_no_false)
 
 print("OK")
+
 
 
 

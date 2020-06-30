@@ -13,7 +13,7 @@ LOCATE_SIGMA = 5 # mean error of igun
 WEIGHT_LOC = 0.5 # distance "expert" weight
 WEIGHT_COLOR = 0.2 # color "expert" weight
 WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
-FRAME_COUNT_THRESHOLD = 2  # min frames per target
+FRAME_COUNT_THRESHOLD = 1  # min frames per target
 
 COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
@@ -87,11 +87,11 @@ def similarity(x,y):
     #x, y = Frame,x,y,class,color,ObjID
     if(x[0]==y[0]):#same frame
         dis = 1.0
-        print(dis)
+        #print(dis)
         return dis
     if(x[5] == y[5] and x[5]>0):#same object
         dis = 0.0
-        print(dis)
+        #print(dis)
         return dis
 
     d = np.power(np.power(x[1] - y[1],2) + np.power(x[2] - y[2],2),0.5)
@@ -101,7 +101,7 @@ def similarity(x,y):
 
 
     prTotal = WEIGHT_LOC*prDist + WEIGHT_COLOR*prCol + WEIGHT_CLASS*prClass
-    print((1-prTotal))
+    #print((1-prTotal))
     return (1.0 - prTotal)
 
 
@@ -125,7 +125,12 @@ df_final = (df.groupby('label').agg({
     'Frame': ['min', 'max', 'count'],
     'ObjID': 'count',
     'class': [lambda x: stats.mode(x)[0], lambda x: list(x)],
-    'color': [lambda x: stats.mode(x)[0], lambda x: list(x)] }) )
+    'color': [lambda x: stats.mode(x)[0], lambda x: list(x)] }) ).reset_index()
+
+# probability distribution functions (color and type)
+df_final= cluster_utils.addFrequencies(df_final,df,'color')
+df_final= cluster_utils.addFrequencies(df_final,df,'class')
+
 
 df_final.columns = ["_".join(x) for x in df_final.columns.ravel()]
 df_final.rename(columns={'class_<lambda_0>':'class',
@@ -137,12 +142,10 @@ df_final.rename(columns={'class_<lambda_0>':'class',
                          },
                  inplace=True)
 
-print(df_final)
 df_final = cluster_utils.AddTextDff(df_final)
 
-
-
-
+#remove outliers
+df_final_no_false = df_final[df_final['Frame_count'] >= FRAME_COUNT_THRESHOLD]
 
 
 #draw results
@@ -152,12 +155,17 @@ cluster_utils.plot_scatter(df,'label','results/clusters.png', False)
 cluster_utils.plot_scatter(df,'label','results/clusters_with_text.png', True)
 
 #draw df_final with text etc
-#TODO: do it nicer
 cluster_utils.plot_scatter(df_final,'class','results/final_with_text.png', True)
-#remove outliers
-df_final_no_false = df_final[df_final['Frame_count'] >= FRAME_COUNT_THRESHOLD]
-cluster_utils.plot_scatter(df_final_no_false,'class','results/final_with_text_no_false.png', True)
-print(df_final_no_false)
+
+
+#plot nicer
+cluster_utils.plot_scatter_final(df_final_no_false,'results/final_with_text_no_false.png', True)
+
+#save csv's
+df_final.to_csv("results/clustered.csv")
+df_final_no_false.to_csv("results/clustered_without_false.csv")
+df.to_csv("results/original_clustered.csv")
+
 
 print("OK")
 

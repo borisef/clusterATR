@@ -15,6 +15,10 @@ from cluster_utils import ProbabilityFromDistance
 
 
 
+COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
+TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
+
+FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
 #inputs
 all_results_in_csv_name = "data/all_results.csv" # data table with all results

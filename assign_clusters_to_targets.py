@@ -14,9 +14,9 @@ WEIGHT_CLASS = 0.6
 WEIGHT_COLOR = 1 - WEIGHT_CLASS
 BONUS_TO_ANY_CLASS = 0.05
 BONUS_TO_ANY_COLOR = 0.1
-ASSIGN_ONE2ONE = True
-ASSIGN_ONE2MANY = not ASSIGN_ONE2ONE
-FAILURE_SIMILARITY_THRESHOLD = 0.2 # don't assign such similarity to no target
+ASSIGN_ONE2ONE = False
+ASSIGN_ONE2MANY = True
+FAILURE_SIMILARITY_THRESHOLD = 0.7 # don't assign such similarity to no target
 
 
 #load targets.csv
@@ -36,10 +36,15 @@ print(np.round( 100.0 -  D*100.0, decimals=0))
 if(ASSIGN_ONE2ONE):
     pass#solve assignment
 else:
-    pass# find max in every row
+    pass# find max in every row if it is > FAILURE_SIMILARITY_THRESHOLD
+    mm = D.argmax(axis=1)
+    good2go = (D.max(axis=1) >FAILURE_SIMILARITY_THRESHOLD)
+    # add target column
+    df_clusters['target'] = np.array(agg_df_targets['target'][mm])
+    df_clusters['good2go']  = good2go
 
 
-# add target column
+df_clusters.to_csv("results/clusters2targets.csv")
 
 
 

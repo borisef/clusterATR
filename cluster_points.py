@@ -5,6 +5,8 @@ import sklearn
 from sklearn import cluster
 from scipy.cluster.hierarchy import fclusterdata
 from scipy import stats
+
+from pymap3d.vincenty import vdist as lla_dist
 import cluster_utils
 import pickle
 
@@ -19,6 +21,7 @@ COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination f
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
 FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
+IS_LLA = False
 
 #inputs
 all_results_in_csv_name = "data/all_results.csv" # data table with all results
@@ -54,7 +57,10 @@ probColors = ConvertConfMatrix2ProbMatrix(conf2,priorsColor, COLOR_CREDIT)
 probClasses = ConvertConfMatrix2ProbMatrix(conf1,priorsClass, TYPES_CREDIT)
 
 
-def similarity(x,y):
+def euclidean_dist(x1, x2, y1, y2):
+    return np.power(np.power(x1 - x2,2) + np.power(y1 - y2,2),0.5)
+
+def similarity(x,y,is_lla=IS_LLA):
     #x, y = Frame,x,y,class,color,ObjID
     if(x[0]==y[0]):#same frame
         dis = 1.0
@@ -65,7 +71,9 @@ def similarity(x,y):
         #print(dis)
         return dis
 
-    d = np.power(np.power(x[1] - y[1],2) + np.power(x[2] - y[2],2),0.5) # euclidean distance
+    d = euclidean_dist(x[1], y[1], x[2], y[2]) if not is_lla else \
+            lla_dist(x[1], x[2], y[1], y[2])
+
     prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
     prCol = probColors[int(x[4]-1), int(y[4]-1)]
     prClass = probClasses[int(x[3]-1), int(y[3]-1)]

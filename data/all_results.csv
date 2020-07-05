@@ -1,4 +1,4 @@
-Frame,x,y,class,color,ObjID
+frame_idx,X,Y,cls,clr,target_id
 1,12,10,7,5,-1
 2,10,11,7,5,-1
 2,10,12,7,5,-1

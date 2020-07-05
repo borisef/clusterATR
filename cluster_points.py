@@ -77,6 +77,7 @@ def similarity(x,y):
 
 
 fclust1 = fclusterdata(X = df, t = FCLUSTER_THRESHOLD , metric=similarity, criterion='distance', method='complete')
+
 numClust = len(np.unique(fclust1))
 print("Num clusters" + str(numClust))
 

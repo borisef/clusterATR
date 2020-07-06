@@ -5,6 +5,8 @@ import sklearn
 from sklearn import cluster
 from scipy.cluster.hierarchy import fclusterdata
 from scipy import stats
+
+from pymap3d.vincenty import vdist as lla_dist
 import cluster_utils
 import pickle
 
@@ -19,6 +21,7 @@ COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination f
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
 FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
+IS_LLA = True
 
 #inputs
 #all_results_in_csv_name = "data/all_results.csv" # data table with all results
@@ -62,8 +65,12 @@ probColors = ConvertConfMatrix2ProbMatrix(conf2,priorsColor, COLOR_CREDIT)
 probClasses = ConvertConfMatrix2ProbMatrix(conf1,priorsClass, TYPES_CREDIT)
 
 
-def similarityType1(x,y):
-    #x, y = frame_idx,X,Y,cls,clr,target_id
+def euclidean_dist(x1, x2, y1, y2):
+    return np.power(np.power(x1 - x2,2) + np.power(y1 - y2,2),0.5)
+
+def similarityType1(x,y,is_lla=IS_LLA):
+    #x, y = Frame,x (or lat) ,y (or lon),class,color,ObjID
+
     if(x[0]==y[0]):#same frame
         dis = 1.0
         #print(dis)
@@ -73,8 +80,10 @@ def similarityType1(x,y):
         #print(dis)
         return dis
 
+    d = euclidean_dist(x[1], y[1], x[2], y[2]) if not is_lla else \
+            lla_dist(x[1], x[2], y[1], y[2])[0]
 
-    d = np.power(np.power(x[1] - y[1],2) + np.power(x[2] - y[2],2),0.5) # euclidean distance
+
     prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
     prCol = probColors[int(x[4]-1), int(y[4]-1)]
     prClass = probClasses[int(x[3]-1), int(y[3]-1)]
@@ -96,6 +105,7 @@ def similarityType2(x,y):
         return dis
 
     d = np.power(np.power(x[4] - y[4],2) + np.power(x[5] - y[5],2),0.5) # euclidean distance
+    print(d)
     prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
     prCol = probColors[int(x[13]-1), int(y[13]-1)] # clr
     prClass = probClasses[int(x[15]-1), int(y[15]-1)] # cls
@@ -112,7 +122,8 @@ if(input_data_type is "type1"):
     df4clust = df
 else:
     similarity = similarityType1 # TODO define your own
-    df4clust = df[['frame_idx', "X", "Y", "cls", "clr", "target_id"]]
+    df4clust = df[['frame_idx', "lat", "lon", "cls", "clr", "target_id"]]
+
 
 
 fclust1 = fclusterdata(X = df4clust, t = FCLUSTER_THRESHOLD , metric=similarity, criterion='distance', method='complete')
@@ -125,11 +136,16 @@ df['label'] = fclust1
 
 df = cluster_utils.AddText(df)
 
+loc1 = 'X'
+loc2 = 'Y'
+if 'lat' in df.columns:
+    loc1 = 'lat'
+    loc2 = 'lon'
 
 #major voting per cluster
 df_final = (df.groupby('label').agg({
-    'X': 'median',
-    'Y': 'median',
+    loc1: 'median',
+    loc2: 'median',
     'frame_idx': ['min', 'max', 'count'],
     'target_id': 'count',
     'cls': [lambda x: stats.mode(x)[0], lambda x: list(x)],
@@ -141,8 +157,8 @@ df_final.rename(columns={'cls_<lambda_0>':'cls',
                          'clr_<lambda_0>':'clr',
                          'cls_<lambda_1>':'all_cls',
                          'clr_<lambda_1>':'all_clr',
-                         'X_median':"X",
-                         'Y_median':'Y',
+                         str(loc1+'_median'):loc1,
+                         str(loc2+'_median'):loc2,
                          "label_":'label'
                          },
                  inplace=True)

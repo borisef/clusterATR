@@ -90,6 +90,12 @@ def AddTextDff(dff):
 
 def plot_scatter(df, grp_by, save2im, withText = False):
 
+    loc1 = "X"
+    loc2 = "Y"
+    if("lat" in df.columns):
+        loc1 = "lat"
+        loc2 = "lon"
+
     groups = df.groupby(grp_by)
     if(grp_by == "clr"):
         hotEncode = hotEncodeColors
@@ -106,17 +112,17 @@ def plot_scatter(df, grp_by, save2im, withText = False):
     ax.margins(0.05)  # Optional, just adds 5% padding to the autoscaling
     for name, group in groups:
         if (grp_by == "clr"):
-            ax.plot(group.X, group.Y, marker='o', linestyle='', ms=5, label=hotEncode[name], color = hotEncode[name], markeredgecolor="black")
+            ax.plot(group[loc1], group[loc2], marker='o', linestyle='', ms=5, label=hotEncode[name], color = hotEncode[name], markeredgecolor="black")
         else:
-            ax.plot(group.X, group.Y, marker='o', linestyle='', ms=5, label=hotEncode[name])
+            ax.plot(group[loc1], group[loc2], marker='o', linestyle='', ms=5, label=hotEncode[name])
     if("objID" in df.columns):
         groups1=df.groupby("target_id")
         for name, group1 in groups1:
             if(name > 0):
-                ax.plot(group1.X, group1.Y, marker='', linestyle='--', ms=1)
+                ax.plot(group1[loc1], group1[loc2], marker='', linestyle='--', ms=1)
 
-    XX = np.array(df["X"])
-    YY = np.array(df["Y"])
+    XX = np.array(df[loc1])
+    YY = np.array(df[loc2])
 
     if(withText):
         TT = np.array(df["text"])
@@ -129,15 +135,19 @@ def plot_scatter(df, grp_by, save2im, withText = False):
     plt.show()
 
 def plot_scatter_final(df, save2im, withText = True):
-
+    loc1 = "X"
+    loc2 = "Y"
+    if ("lat" in df.columns):
+        loc1 = "lat"
+        loc2 = "lon"
 
     # Plot
     fig, ax = plt.subplots()
     ax.margins(0.05)  # Optional, just adds 5% padding to the autoscaling
 
 
-    XX = np.array(df["X"])
-    YY = np.array(df["Y"])
+    XX = np.array(df[loc1])
+    YY = np.array(df[loc2])
     CC = np.array(df["clr"].map(hotEncodeColors))
     SS = np.array(df["frame_idx_count"])
     SS = ((SS - SS.min() + 1.0)/ (SS.max() - SS.min() + 1.0)*50)
@@ -207,6 +217,6 @@ def ReadCSV_or_TXT(all_results_name, data_type):
 
     else:
         df = pd.read_csv(all_results_name, sep = ' ')
-        df = df.rename(columns={'lat': 'X', 'lon': 'Y', 'X': 'lat', 'Y': 'lon'})
+        #df = df.rename(columns={'lat': 'X', 'lon': 'Y', 'X': 'lat', 'Y': 'lon'})
 
     return df

@@ -218,5 +218,7 @@ def ReadCSV_or_TXT(all_results_name, data_type):
     else:
         df = pd.read_csv(all_results_name, sep = ' ')
         #df = df.rename(columns={'lat': 'X', 'lon': 'Y', 'X': 'lat', 'Y': 'lon'})
+        if("lvl" in df.columns):
+            df = df[df["lvl"]==2]
 
     return df

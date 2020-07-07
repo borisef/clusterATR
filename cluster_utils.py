@@ -7,9 +7,9 @@ import sklearn.metrics
 from scipy.spatial import distance
 
 #hotEncodeColors = { 0: 'black', 1: 'blue', 2: 'gray',  3: 'green',4: 'red', 5: 'white', 6: 'brown'}
-hotEncodeColors = { 1: 'black', 2: 'blue', 3: 'gray',  4: 'green',5: 'red', 6: 'white', 7: 'brown'}
+hotEncodeColors = { 1: 'unknown', 2: 'white', 3: 'silver',  4: 'gray',5: 'black', 6: 'red', 7: 'green', 8: 'blue', 9: 'brown'}
 hotEncodeTypes = { 1: 'UNKNOWN_SUB_CLASS', 2: 'PRIVATE', 3: 'COMMERCIAL',  4: 'PICKUP',5: 'TRUCK', 6: 'BUS', 7: 'VAN', 8: 'TRACKTOR'}
-smallestColor = 0
+smallestColor = 1
 smallestType = 1
 
 def ConvertConfMatrix2ProbMatrix(M, priors = None, credit = 0):
@@ -115,7 +115,7 @@ def plot_scatter(df, grp_by, save2im, withText = False):
             ax.plot(group[loc1], group[loc2], marker='o', linestyle='', ms=5, label=hotEncode[name], color = hotEncode[name], markeredgecolor="black")
         else:
             ax.plot(group[loc1], group[loc2], marker='o', linestyle='', ms=5, label=hotEncode[name])
-    if("objID" in df.columns):
+    if("target_id" in df.columns):
         groups1=df.groupby("target_id")
         for name, group1 in groups1:
             if(name > 0):

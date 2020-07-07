@@ -32,24 +32,27 @@ input_data_type = "type2" # like all_results.csv
 
 
 confmType_csv_name = "data/confmType.csv" # confusion matrix type classifier
-confmColor_csv_name = "data/confmColor.csv" # confusion matrix color classifier
+confmColor_csv_name = "data/confmColor1.csv" # confusion matrix color classifier
 
 
 
 
 #parameters
 LOCATE_SIGMA = 5 # mean error of igun
-WEIGHT_LOC = 0.5 # distance "expert" weight
-WEIGHT_COLOR = 0.2 # color "expert" weight
+WEIGHT_LOC = 1.0 # distance "expert" weight
+WEIGHT_COLOR = 0.0 # color "expert" weight
 WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
-FRAME_COUNT_THRESHOLD = 3  # min frames per target
+FRAME_COUNT_THRESHOLD = 2  # min frames per target
 
 COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
-FCLUSTER_THRESHOLD = 0.7 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
+FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
-priorsColor = np.ones(shape=(7,1))/7 # prior believes color
+priorsColor = np.ones(shape=(9,1))/7 # prior believes color
+priorsColor[0]= 0 #unknown
+priorsColor[2]= 0 #silver
+
 priorsClass = np.ones(shape=(8,1))/8 # prior believes types/classes
 
 #load data from csv
@@ -131,6 +134,7 @@ numClust = len(np.unique(fclust1))
 print("Num clusters" + str(numClust))
 
 df['label'] = fclust1
+df4clust['label'] = fclust1 # warning
 #aa = cluster.DBSCAN(eps=0.3, min_samples=1, metric= similarityType1).fit_predict(df) # another clustering to consider
 
 
@@ -144,10 +148,11 @@ if 'lat' in df.columns:
 
 #major voting per cluster
 df_final = (df.groupby('label').agg({
-    loc1: 'median',
-    loc2: 'median',
+    loc1: ['median', 'min', 'max'],
+    loc2: ['median', 'min', 'max'],
     'frame_idx': ['min', 'max', 'count'],
     'target_id': 'count',
+    'ts': ['min', 'count'],
     'cls': [lambda x: stats.mode(x)[0], lambda x: list(x)],
     'clr': [lambda x: stats.mode(x)[0], lambda x: list(x)] }) ).reset_index()
 
@@ -181,6 +186,8 @@ cluster_utils.plot_scatter(df,'clr','results/colors.png')
 cluster_utils.plot_scatter(df,'cls','results/types.png')
 cluster_utils.plot_scatter(df,'label','results/clusters.png', False)
 cluster_utils.plot_scatter(df,'label','results/clusters_with_text.png', True)
+#cluster_utils.plot_scatter(df,'target_id','results/target_ids.png', False)
+
 
 #draw  with text etc
 cluster_utils.plot_scatter(df_final,'cls','results/final_with_text.png', True)

@@ -13,14 +13,13 @@ import pickle
 from cluster_utils import hotEncodeColors
 from cluster_utils import hotEncodeTypes
 from cluster_utils import ConvertConfMatrix2ProbMatrix
-from cluster_utils import ProbabilityFromDistance, ReadCSV_or_TXT
+from cluster_utils import ProbabilityFromDistance, ReadCSV_or_TXT, euclidean_dist
 
 
 
-COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
-TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
+COLOR_CREDIT = 0.05 # our belief in possibility of most crazy color combination for same target
+TYPES_CREDIT = 0.05 # our belief in possibility of most crazy type combination for same target
 
-FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 IS_LLA = True
 
 #inputs
@@ -39,19 +38,21 @@ confmColor_csv_name = "data/confmColor1.csv" # confusion matrix color classifier
 
 #parameters
 LOCATE_SIGMA = 5 # mean error of igun
-WEIGHT_LOC = 0.9 # distance "expert" weight
-WEIGHT_COLOR = 0.1 # color "expert" weight
+
+FCLUSTER_THRESHOLD = 0.7 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
+
+WEIGHT_LOC = 0.7 # distance "expert" weight
+WEIGHT_COLOR = 0.15 # color "expert" weight
 WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
 FRAME_COUNT_THRESHOLD = 2  # min frames per target
+HARD_DISTANCE_THRESHOLD = 20 # min distance for "no chance it is the same car" (unless same ID)
 
 COLOR_CREDIT = 0.1 # our belief in possibility of most crazy color combination for same target
 TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination for same target
 
-FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
-priorsColor = np.ones(shape=(9,1))/9 # prior believes color
-priorsColor[0]= 0 #unknown
-priorsColor[2]= 0 #silver
+priorsColor = np.ones(shape=(9,1))/7 # prior believes color
+priorsColor[[0,2]]= 0  #unknown, silver
 
 priorsClass = np.ones(shape=(8,1))/8 # prior believes types/classes
 
@@ -69,8 +70,7 @@ probColors = ConvertConfMatrix2ProbMatrix(conf2,priorsColor, COLOR_CREDIT)
 
 
 
-def euclidean_dist(x1, x2, y1, y2):
-    return np.power(np.power(x1 - x2,2) + np.power(y1 - y2,2),0.5)
+
 
 def similarityType1(x,y,is_lla=IS_LLA):
     #x, y = Frame,x (or lat) ,y (or lon),class,color,ObjID
@@ -87,6 +87,10 @@ def similarityType1(x,y,is_lla=IS_LLA):
     d = euclidean_dist(x[1], y[1], x[2], y[2]) if not is_lla else \
             lla_dist(x[1], x[2], y[1], y[2])[0]
 
+    if(d > HARD_DISTANCE_THRESHOLD):
+        dis = 1.0
+        # print(dis)
+        return dis
 
     prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
     prCol = probColors[int(x[4])-1, int(y[4])-1]
@@ -97,27 +101,27 @@ def similarityType1(x,y,is_lla=IS_LLA):
     #print((1-prTotal))
     return (1.0 - prTotal)
 
-def similarityType2(x,y):
-    #x, y = frame_idx target_id ts daytime X Y Z lat lon x y w h clr clr_score cls cls_score
-    if(x[0]==y[0]):#same frame
-        dis = 1.0
-        #print(dis)
-        return dis
-    if(x[1] == y[1] and x[1]>0):#same object
-        dis = 0.0
-        #print(dis)
-        return dis
-
-    d = np.power(np.power(x[4] - y[4],2) + np.power(x[5] - y[5],2),0.5) # euclidean distance
-    print(d)
-    prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
-    prCol = probColors[int(x[13]-1), int(y[13]-1)] # clr
-    prClass = probClasses[int(x[15]-1), int(y[15]-1)] # cls
-
-    #weighted average
-    prTotal = WEIGHT_LOC*prDist + WEIGHT_COLOR*prCol + WEIGHT_CLASS*prClass
-    #print((1-prTotal))
-    return (1.0 - prTotal)
+# def similarityType2(x,y):
+#     #x, y = frame_idx target_id ts daytime X Y Z lat lon x y w h clr clr_score cls cls_score
+#     if(x[0]==y[0]):#same frame
+#         dis = 1.0
+#         #print(dis)
+#         return dis
+#     if(x[1] == y[1] and x[1]>0):#same object
+#         dis = 0.0
+#         #print(dis)
+#         return dis
+#
+#     d = np.power(np.power(x[4] - y[4],2) + np.power(x[5] - y[5],2),0.5) # euclidean distance
+#     print(d)
+#     prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
+#     prCol = probColors[int(x[13]-1), int(y[13]-1)] # clr
+#     prClass = probClasses[int(x[15]-1), int(y[15]-1)] # cls
+#
+#     #weighted average
+#     prTotal = WEIGHT_LOC*prDist + WEIGHT_COLOR*prCol + WEIGHT_CLASS*prClass
+#     #print((1-prTotal))
+#     return (1.0 - prTotal)
 
 
 
@@ -126,7 +130,7 @@ if(input_data_type is "type1"):
     df4clust = df
 else:
     similarity = similarityType1 # TODO define your own
-    df4clust = df[['frame_idx', "lat", "lon", "cls", "clr", "target_id"]]
+    df4clust =  df[['frame_idx', "lat", "lon", "cls", "clr", "target_id"]].copy()
 
 
 
@@ -135,7 +139,7 @@ numClust = len(np.unique(fclust1))
 print("Num clusters" + str(numClust))
 
 df['label'] = fclust1
-df4clust['label'] = fclust1 # warning
+df4clust['label'] = fclust1
 #aa = cluster.DBSCAN(eps=0.3, min_samples=1, metric= similarityType1).fit_predict(df) # another clustering to consider
 
 
@@ -177,7 +181,7 @@ df_final= cluster_utils.addFrequencies(df_final,df,'cls')
 
 
 df_final = cluster_utils.AddTextDff(df_final)
-
+df_final = cluster_utils.AddClusterRange(df_final)
 #remove outliers
 df_final_no_false = df_final[df_final['frame_idx_count'] >= FRAME_COUNT_THRESHOLD]
 
@@ -194,6 +198,7 @@ cluster_utils.plot_scatter(df,'label','results/clusters_with_text.png', True)
 cluster_utils.plot_scatter(df_final,'cls','results/final_with_text.png', True)
 #plot nicer
 cluster_utils.plot_scatter_final(df_final_no_false,'results/final_with_text_no_false.png', True)
+cluster_utils.plot_scatter_final(df_final_no_false,'results/final_with_range.png', False, "range")
 
 #save csv's
 df_final.to_csv("results/clustered.csv")

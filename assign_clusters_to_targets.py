@@ -6,7 +6,7 @@ import pandas as pd
 #each target is mixture of up to 3 targets
 
 #inputs
-targets_csv = "data/targets.csv" # from tiles
+targets_csv = "data/targets1.csv" # from tiles
 clusters_pickle = "results/clustered_without_false.pckl" # from cluster_points.py results
 
 #params

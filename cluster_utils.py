@@ -43,7 +43,7 @@ def ProbabilityFromDistance(d,sigma,pow=1):
     #distance in meters
     #sigma = standard deviation
     #pow - amplify
-    pr = np.exp(-np.power(d/sigma,2))
+    pr = np.exp(-d/np.power(sigma,2))
     pr = np.power(pr,pow)
     return pr
 

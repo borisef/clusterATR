@@ -27,7 +27,7 @@ IS_LLA = True
 #all_results_in_csv_name = "data/all_results.csv" # data table with all results
 #input_data_type = "type1" # like all_results.csv
 
-all_results_in_csv_name = "data/recogs.txt" # data table with all results
+all_results_in_csv_name = "data/recogs1.txt" # data table with all results
 input_data_type = "type2" # like all_results.csv
 
 
@@ -39,8 +39,8 @@ confmColor_csv_name = "data/confmColor1.csv" # confusion matrix color classifier
 
 #parameters
 LOCATE_SIGMA = 5 # mean error of igun
-WEIGHT_LOC = 1.0 # distance "expert" weight
-WEIGHT_COLOR = 0.0 # color "expert" weight
+WEIGHT_LOC = 0.9 # distance "expert" weight
+WEIGHT_COLOR = 0.1 # color "expert" weight
 WEIGHT_CLASS = 1 - WEIGHT_LOC - WEIGHT_COLOR
 FRAME_COUNT_THRESHOLD = 2  # min frames per target
 
@@ -49,7 +49,7 @@ TYPES_CREDIT = 0.1 # our belief in possibility of most crazy type combination fo
 
 FCLUSTER_THRESHOLD = 0.8 # threshold on fclusterdata , between [0, 1] , small ==> many clusters , large ==> few clusters
 
-priorsColor = np.ones(shape=(9,1))/7 # prior believes color
+priorsColor = np.ones(shape=(9,1))/9 # prior believes color
 priorsColor[0]= 0 #unknown
 priorsColor[2]= 0 #silver
 
@@ -64,8 +64,9 @@ conf1 = np.genfromtxt(confmType_csv_name, delimiter=',')
 conf2 = np.genfromtxt(confmColor_csv_name, delimiter=',')
 
 #convert to probabilities
-probColors = ConvertConfMatrix2ProbMatrix(conf2,priorsColor, COLOR_CREDIT)
 probClasses = ConvertConfMatrix2ProbMatrix(conf1,priorsClass, TYPES_CREDIT)
+probColors = ConvertConfMatrix2ProbMatrix(conf2,priorsColor, COLOR_CREDIT)
+
 
 
 def euclidean_dist(x1, x2, y1, y2):
@@ -88,7 +89,7 @@ def similarityType1(x,y,is_lla=IS_LLA):
 
 
     prDist = ProbabilityFromDistance(d,LOCATE_SIGMA)
-    prCol = probColors[int(x[4]-1), int(y[4]-1)]
+    prCol = probColors[int(x[4])-1, int(y[4])-1]
     prClass = probClasses[int(x[3]-1), int(y[3]-1)]
 
     #weighted average
